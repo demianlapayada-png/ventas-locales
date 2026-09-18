@@ -116,6 +116,10 @@
     <h2 class="section-title">Empanadas</h2>
     <p style="font-size:12.5px; color:var(--text-faint); margin:0 0 10px;">En rojo, los gustos que hace más de 6 días que no pedís.</p>
     <div class="items-list" id="empanadas-items"></div>
+    <div id="total-chapas-box" style="display:flex; justify-content:space-between; align-items:center; background:var(--panel); border:1px dashed var(--border-strong); border-radius:10px; padding:12px 14px; margin-top:8px;">
+      <span style="font-size:12px; text-transform:uppercase; letter-spacing:0.04em; color:var(--text-dim);">Total de chapas</span>
+      <span id="total-chapas-valor" style="font-family:var(--font-mono); font-size:20px; font-weight:700; color:var(--coral);">0</span>
+    </div>
 
     <h2 class="section-title">Pizzas e insumos</h2>
     <div class="items-list" id="insumos-items"></div>
@@ -135,6 +139,7 @@
   "use strict";
 
   const SABORES = ["Wok de Vegetales","Carne Cuchillo Suave","Carne Porteña Suave","Pollo Suave","Jamón y Queso","Cebolla y Queso","Cantimpalo y Queso","Chicken BBQ","Roquefort y Jamón","Verdura","Caprese","Humita","Vacío y Provoleta","Matambre a la Pizza","Carne Porteña Picante","Cheeseburger","Bondiola BBQ"];
+  const SABORES_18U = ["Wok de Vegetales","Matambre a la Pizza"];
 
   const INSUMOS_VENTA = [
     { nombre: "Prepizzas", unidad: "x2" },
@@ -282,17 +287,22 @@
       const dias = ultima ? diasEntre(ultima, hoy) : null;
       const enAlerta = dias === null || dias > DIAS_ALERTA;
       const badgeTexto = ultima ? `${dias}d` : "Nunca";
+      const es18 = SABORES_18U.includes(s);
       const row = document.createElement("div");
       row.className = "item-row" + (enAlerta ? " alerta" : "");
       row.innerHTML = `
         <div class="ir-nombre-fila">
-          <span class="ir-nombre">${s}</span>
+          <span class="ir-nombre">${s}${es18 ? ' <span style="color:var(--text-faint); font-weight:500;">(x18)</span>' : ""}</span>
           <span class="ir-badge${enAlerta ? " badge-alerta" : ""}">${badgeTexto}</span>
         </div>
         <div class="ir-unidad">chapas</div>
         <input type="number" min="0" step="1" value="0" data-sabor="${s}">`;
       contEmp.appendChild(row);
     });
+    document.querySelectorAll('#empanadas-items input[data-sabor]').forEach(inp => {
+      inp.addEventListener("input", actualizarTotalChapas);
+    });
+    actualizarTotalChapas();
 
     const contIns = document.getElementById("insumos-items");
     contIns.innerHTML = "";
@@ -305,6 +315,14 @@
         <input type="number" min="0" step="0.5" value="0" data-insumo="${it.nombre}">`;
       contIns.appendChild(row);
     });
+  }
+
+  function actualizarTotalChapas(){
+    let total = 0;
+    document.querySelectorAll('#empanadas-items input[data-sabor]').forEach(inp => {
+      total += Number(inp.value) || 0;
+    });
+    document.getElementById("total-chapas-valor").textContent = total;
   }
 
   document.getElementById("btn-enviar-pedido").addEventListener("click", async () => {
